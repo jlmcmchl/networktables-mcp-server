@@ -27,34 +27,11 @@ A Model Context Protocol (MCP) server that provides AI agents with access to FRC
 - **Schema Validation**: Ensure data types match NT topic expectations
 - **Array Handling**: Proper serialization of NT arrays, structs, and complex types
 
-### ⚡ **Performance Considerations**
-- **Batching**: Group multiple operations to reduce MCP overhead
-- **Caching**: Intelligent caching of frequently accessed values with configurable TTL
-- **Delta Updates**: Only transmit changed values for efficiency
-- **Rate Limiting**: Prevent overwhelming the NT network
-
 ## Installation
 
-### Requirements
-
 ```bash
-pip install fastmcp pyntcore
+uv run fastmcp install --with pyntcore nt_mcp_server.py
 ```
-
-### Dependencies
-
-Create a `requirements.txt` file:
-
-```txt
-fastmcp>=2.7.1
-pyntcore>=2025.3.2.3
-```
-
-### Quick Setup
-
-1. **Clone or download** the server files
-2. **Install dependencies**: `pip install -r requirements.txt`
-3. **Run the server**: `python mcp-nt2.py`
 
 ## Usage Examples
 
@@ -149,109 +126,6 @@ topic_info = await mcp.call_tool("nt_get_info", {
 })
 ```
 
-## Configuration Scenarios
-
-### Competition Configuration
-
-For competition use with optimized performance:
-
-```python
-server = create_server_for_competition(team_number=1234)
-```
-
-**Features:**
-- 50ms cache TTL for responsiveness
-- High-priority topic monitoring
-- Connection health alerts
-- Minimal latency settings
-
-### Practice Configuration
-
-For practice sessions with enhanced logging:
-
-```python
-server = create_server_for_practice(team_number=1234)
-```
-
-**Features:**
-- 100ms cache TTL
-- Full topic logging
-- Extended diagnostics
-- Performance metrics
-
-### Simulation Configuration
-
-For robot simulation and testing:
-
-```python
-server = create_server_for_simulation()
-```
-
-**Features:**
-- 200ms cache TTL
-- Localhost connection
-- Physics topic support
-- Development-friendly settings
-
-### Scouting Configuration
-
-For match data collection and analysis:
-
-```python
-server = create_server_for_scouting(team_number=1234)
-```
-
-**Features:**
-- Match-specific topics
-- Performance metrics collection
-- 1Hz data recording
-- Analysis-ready output
-
-## Advanced Usage
-
-### Resource Access
-
-NetworkTables topics are automatically exposed as MCP resources:
-
-```python
-# List all NT resources
-resources = await mcp.list_resources()
-
-# Access topic as resource
-topic_resource = await mcp.get_resource("nt:///SmartDashboard/Auto Selector")
-```
-
-### Batch Operations
-
-Efficiently handle multiple operations:
-
-```python
-# Batch read critical telemetry
-health_check = await mcp.call_tool("nt_get_multiple", {
-    "topics": [
-        "/SmartDashboard/Battery Voltage",
-        "/SmartDashboard/CPU Usage", 
-        "/SmartDashboard/CAN Utilization",
-        "/SmartDashboard/FMS Connected"
-    ],
-    "use_cache": False  # Force fresh reads
-})
-```
-
-### Error Handling
-
-Robust error handling for competition reliability:
-
-```python
-try:
-    result = await mcp.call_tool("nt_get", {"topic": "/critical/topic"})
-    if result is None:
-        # Handle missing topic
-        await fallback_behavior()
-except Exception as e:
-    logger.error(f"NT operation failed: {e}")
-    # Implement retry logic
-```
 
 ## API Reference
 
@@ -259,58 +133,30 @@ except Exception as e:
 
 - `nt_connect(team_number?, server_ip?, server_port?, identity?)` - Connect to NT server
 - `nt_disconnect()` - Disconnect from NT server  
-- `nt_connection_info()` - Get connection status and info
+- `nt_connection_info()` - Get connection info
+- `nt_time_sync_info()` - Get time sync info
 
 ### Data Access Tools
 
-- `nt_get(topic, use_cache?)` - Get single topic value
-- `nt_get_multiple(topics[], use_cache?)` - Get multiple topic values
+- `nt_get(topic)` - Get single topic value
+- `nt_get_multiple(topics[])` - Get multiple topic values
 - `nt_set(topic, value)` - Set single topic value
 - `nt_set_multiple(updates{})` - Set multiple topic values
 
 ### Discovery Tools
 
-- `nt_list_topics(filter_pattern?)` - List available topics
+- `nt_list_topics(topic_prefix?)` - List available topics
 - `nt_get_info(topic)` - Get detailed topic information
 
 ### Monitoring Tools
 
-- `nt_subscribe(topics[], duration)` - Monitor topics for duration
+- `nt_subscribe(topics[], duration)` - Record all data in topics for a period of time
 
 ### Resource URIs
 
 - `nt://topics` - List all available topics
 - `nt:///path/to/topic` - Access specific topic as resource
 
-## Performance Tuning
-
-### Cache Configuration
-
-```python
-# Adjust cache TTL based on use case
-server.nt_manager.cache_ttl = 0.05  # 50ms for competition
-server.nt_manager.cache_ttl = 0.1   # 100ms for practice  
-server.nt_manager.cache_ttl = 0.2   # 200ms for simulation
-```
-
-### Batch Size Optimization
-
-```python
-# Use batch operations for multiple related topics
-topics = [f"/subsystem/sensor_{i}" for i in range(10)]
-all_values = await mcp.call_tool("nt_get_multiple", {"topics": topics})
-```
-
-### Connection Optimization
-
-```python
-# Optimize for competition network conditions
-await mcp.call_tool("nt_connect", {
-    "team_number": 1234,
-    "identity": "MCP-Competition",
-    # Connection will auto-discover robot IP
-})
-```
 
 ## Troubleshooting
 
@@ -320,11 +166,6 @@ await mcp.call_tool("nt_connect", {
 - Verify robot/simulator is running
 - Check team number or IP address
 - Ensure NetworkTables port (5810) is accessible
-
-**Slow Performance** 
-- Reduce cache TTL for real-time data
-- Use batch operations for multiple topics
-- Check network latency to robot
 
 **Missing Topics**
 - Topics must be published by robot code first
@@ -349,59 +190,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 For development and testing:
 
-```python
-# Enable additional diagnostics
-server = NetworkTablesMCPServer()
-server.nt_manager.cache_ttl = 0.0  # Disable caching
-# Run with verbose logging
-```
-
-## Integration Examples
-
-### With Competition Software
-
-```python
-# Monitor autonomous sequence
-auto_data = await mcp.call_tool("nt_subscribe", {
-    "topics": ["/Robot/Autonomous", "/SmartDashboard/Auto Selector"],
-    "duration": 15.0
-})
-
-# Analyze performance
-analysis = analyze_autonomous_performance(auto_data)
-```
-
-### With Scouting Systems
-
-```python
-# Collect match data
-match_topics = [
-    "/SmartDashboard/Match Time",
-    "/SmartDashboard/Alliance Score", 
-    "/SmartDashboard/Robot Performance"
-]
-
-match_data = await mcp.call_tool("nt_subscribe", {
-    "topics": match_topics,
-    "duration": 150.0  # Full match duration
-})
-
-# Export for analysis
-export_match_data(match_data, "match_001.json")
-```
-
-### With Dashboard Applications
-
-```python
-# Real-time dashboard updates
-while competition_active:
-    telemetry = await mcp.call_tool("nt_get_multiple", {
-        "topics": DASHBOARD_TOPICS,
-        "use_cache": True
-    })
-    
-    update_dashboard(telemetry)
-    await asyncio.sleep(0.1)  # 10Hz updates
+```bash
+uv run fastmcp dev --with pyntcore nt_mcp_server.py 
 ```
 
 ## License
