@@ -123,7 +123,7 @@ def nt_set(topic: str, value: Any, ctx: Context = None) -> bool:
     return nt_manager.set_value(unquote(topic), value)
 
 @mcp.tool
-def nt_set_array(topic: str, value: Any, ctx: Context = None) -> bool:
+def nt_set_array(topic: str, value: str, ctx: Context = None) -> bool:
     """Set value to a NetworkTables topic"""
     nt_manager: NetworkTablesManager = ctx.request_context.lifespan_context
     return nt_manager.set_value(unquote(topic), json.loads(value))

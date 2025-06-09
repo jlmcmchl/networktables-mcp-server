@@ -141,6 +141,7 @@ topic_info = await mcp.call_tool("nt_get_info", {
 - `nt_get(topic)` - Get single topic value
 - `nt_get_multiple(topics[])` - Get multiple topic values
 - `nt_set(topic, value)` - Set single topic value
+- `nt_set_array(topic, value)` - Set single topic value - array types
 - `nt_set_multiple(updates{})` - Set multiple topic values
 
 ### Discovery Tools
@@ -150,7 +151,7 @@ topic_info = await mcp.call_tool("nt_get_info", {
 
 ### Monitoring Tools
 
-- `nt_subscribe(topics[], duration)` - Record all data in topics for a period of time
+- `nt_subscribe(topic_prefixes[], duration)` - Record all data in topics for a period of time
 
 ### Resource URIs
 
