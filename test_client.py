@@ -110,7 +110,7 @@ class DirectMCPTester:
             read_value = self.nt_manager.get_value(test_topic)
             print(f"Read back: {read_value}")
             
-            if read_value == test_value:
+            if read_value.value == test_value:
                 print("✅ Read/write test passed")
             else:
                 print("❌ Read/write test failed")
